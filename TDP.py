@@ -34,7 +34,7 @@ class Modified_E_min:
     def __init__(self, temperature, Incision_status, E_min):
         """
         :param: temperature: working temperature of the member in degrees of Fahrenheit
-        :param Incision_status: An identifier showing weather the section is incised or not
+        :param Incision_status: An identifier showing whether the section is incised or not
         :param: E_min: Modulus of elasticity for beam and column stability
         """
         self.C_M = 0.9
@@ -104,11 +104,11 @@ class Modified_F_b:
                             'CLT': Cross-Laminated Timber
         :param: Fb: Nominal bending strength
         :param temperature: working temperature in degrees of Fahrenheit
-        :param Incision_status: An identifier showing weather the section is incised or not
+        :param Incision_status: An identifier showing whether the section is incised or not
         :param Spacing: Center-to-center distance between members
         :param: Species_Type: 'Southern Pine' or 'Unspecified'
-        :param Curvature_status: Indicates weather the member is curved or not (only for GLT)
-        :param Taper_status: Indicates weather the member is tapered or not (only for GLT)
+        :param Curvature_status: Indicates whether the member is curved or not (only for GLT)
+        :param Taper_status: Indicates whether the member is tapered or not (only for GLT)
         :param Span_status: 'Cantilever' or 'Single Span'
         :param Loading_type:
         'C': Concentrated load at unsupported end or Concentrated load at center with no intermediate lateral support
