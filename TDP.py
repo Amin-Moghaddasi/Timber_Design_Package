@@ -1,7 +1,6 @@
 from math import pow
 from math import sqrt
 
-
 class Section_Tools:
     def Rect_I_x(self, breadth, height):
         """
@@ -41,6 +40,7 @@ class Modified_E_min:
         self.temperature = temperature
         self.Incision_status = Incision_status
         self.E_min = E_min
+        self.Kf = 1.76
 
         return None
     def C_t_E_min(self):
@@ -77,7 +77,7 @@ class Modified_E_min:
                   '\n','It is only allowed to be from 0 to 150 degrees')
             return self.E_min
         else:
-            E_min_prime = self.E_min * self.C_t_E_min() * self.C_i_E_min() * self.C_M
+            E_min_prime = self.E_min * self.C_t_E_min() * self.C_i_E_min() * self.C_M * self.Kf
         return E_min_prime
 
 class Modified_F_b:
@@ -554,3 +554,446 @@ class Modified_F_b:
         else:
             F_b_n_prime = self.Fb * self.lamda * self.K_f * self.Phi_b * self.C_M() * self.C_t() * self.C_L() * self.C_V() * self.C_fu() * self.C_c() * self.C_I() * self.C_i() * self.C_r()
         return F_b_n_prime
+class Modified_F_v:
+    def __init__(self, lamda, MC, Material_type,
+                 Fv, temperature, Incision_status):
+        """
+
+        :param lamda: Time effect factor (LRFD only)
+        :param MC: Moisture content
+        :param Material_type: 'SL': Sawn Lumber
+                            'PIJ': Prefabricated I-Joists
+                            'SCL': Structural Composite Lumber
+                            'WSP': Wooden Structural Panels
+                            'CLT': Cross-Laminated Timber
+        :param Fv: Nominal shear strength
+        :param temperature: working temperature in degrees of Fahrenheit
+        :param Incision_status: An identifier showing whether the section is incised or not
+        """
+        self.lamda = lamda
+        self.Phi_v = 0.75  # Resistance Factor (Appendix N Table N2 NDS 2024)
+        self.K_f = 2.88  # Format Conversion Factor (Appendix N Table 4.3.1 NDS 2024)
+        self.MC = MC
+        self.Material_type = Material_type
+        self.F_v = Fv
+        self.temperature = temperature
+        self.Incision_status = Incision_status
+    def C_i(self):
+        """
+        Returns incising factor (C_i) according to Table 4.3.8 in NDS 2024
+        """
+        Incision_status = self.Incision_status
+        if Incision_status:
+            C_i = 0.8
+        else:
+            C_i = 1.0
+        return C_i
+    def C_M (self):
+        """
+        :return: Returns CM for shear only
+        """
+        if self.MC <= 0.19:
+            C_M = 1.0
+        else:
+            C_M = 0.97
+        return C_M
+    def Moisture_Condition(self):
+        """
+        Specifies if the entered material is classified as wet or dry
+        """
+        Material_type = self.Material_type
+        MC = self.MC
+        if Material_type == 'SL':
+            if MC <= 0.19:
+                Wet = False
+            else:
+                Wet = True
+        elif Material_type == 'GLT' or Material_type == 'PIJ' or Material_type == 'SCL' or Material_type == 'WSP' or Material_type == 'CLT':
+            if MC <= 0.16:
+                Wet = False
+            else:
+                Wet = True
+        return Wet
+    def C_t(self):
+        if self.Moisture_Condition():
+            if self.temperature < 100:
+                C_t = 1.0
+            elif 100<= self.temperature < 125:
+                C_t = 0.7
+            else:
+                C_t = 0.5
+        else:
+            if self.temperature < 100:
+                C_t = 1.0
+            elif 100<= self.temperature < 125:
+                C_t = 0.8
+            else:
+                C_t = 0.7
+        return C_t
+    def C_i(self):
+        if self.Incision_status:
+            C_i = 0.8
+        else:
+            C_i = 1.0
+        return C_i
+    def C_vr(self):
+        if self.Material_type =='GLT' or self.Material_type =='Glulam':
+            C_vr = 0.72
+        else:
+            C_vr = 1.0
+        return C_vr
+    def F_v_n_prime(self):
+        F_v_n_prime = self.F_v * self.Phi_v * self.K_f * self.lamda * self.C_M() * self.C_t() * self.C_i() * self.C_vr()
+class Modified_F_c_perpendicular:
+    def __init__(self, MC, Material_type, temperature, F_c_perp):
+        """
+
+        :param MC: Moisture content
+        :param Material_type: 'SL': Sawn Lumber
+                            'PIJ': Prefabricated I-Joists
+                            'SCL': Structural Composite Lumber
+                            'WSP': Wooden Structural Panels
+                            'CLT': Cross-Laminated Timber
+        :param temperature: working temperature in degrees of Fahrenheit
+        :param F_c_perp: Nominal parallel to grain compressive strength (bearing strength)
+        """
+        self.Phi_c = 0.9
+        self.Kf = 1.67
+        self.MC = MC
+        self.Material_type = Material_type
+        self.temperature = temperature
+        self.C_i = 1.0
+        self.C_b = 1.0  # Conservative design
+        self.F_c_perp = F_c_perp
+    def C_M(self):
+        if self.MC <= 0.19:
+            C_M = 1.0
+        else:
+            C_M = 0.67
+        return C_M
+    def Moisture_condition(self):
+        if self.Material_type == 'SL':
+            if self.MC <= 0.19:
+                Wet = False
+            else:
+                Wet = True
+        else:
+            if self.MC <= 0.16:
+                Wet = False
+            else:
+                Wet = True
+        return Wet
+
+    def C_t(self):
+        if self.Moisture_Condition():
+            if self.temperature < 100:
+                C_t = 1.0
+            elif 100 <= self.temperature < 125:
+                C_t = 0.7
+            else:
+                C_t = 0.5
+        else:
+            if self.temperature < 100:
+                C_t = 1.0
+            elif 100 <= self.temperature < 125:
+                C_t = 0.8
+            else:
+                C_t = 0.7
+        return C_t
+    def F_c_n_perpendicular_prime(self):
+        F_c_n_perp_prime = self.F_c_perp * self.Kf * self.Phi_c * self.C_M() * self.C_t() * self.C_i * self.C_b
+        return F_c_n_perp_prime
+class Modified_F_c_parallel:
+    def __init__(self, lamda, height, breadth, Member_type, Grade, MC, Material_type,
+                 Fc, temperature, Incision_status, E_min_prime,
+                 length, base_support, top_support):
+        """
+                :param: lamda : Time effect factor (LRFD only)
+                :param height: Height of the rectangular section (inches)
+                :param: breadth: Breadth f the rectangular section (inches)
+                :param: Member_type: Designates whether a beam or column is being analyzed
+                'B' for beam
+                'C' for column
+                :param Grade: Grade string representing the type of wooden section :
+                'Select' & 'Structural' & 'No.1 & Btr' & 'No.1' & 'No.2' & 'No.3'
+                'Stud'
+                'Construction' & 'Standard'
+                'Utility'
+                'Unspecified'
+                :param MC: Moisture content
+                :param Material_type: 'SL': Sawn Lumber
+                                    'PIJ': Prefabricated I-Joists
+                                    'SCL': Structural Composite Lumber
+                                    'WSP': Wooden Structural Panels
+                                    'CLT': Cross-Laminated Timber
+                :param: Fc: Nominal compressive strength (parallel to grain)
+                :param temperature: working temperature in degrees of Fahrenheit
+                :param Incision_status: An identifier showing whether the section is incised or not
+                :param: E_min_prime : Modified modulus of elasticity for beam and column stability
+                :param: length: Length of a column (feet)
+                :param: base_support: Supports conditions at the base of the column
+                'Fixed' for fixed support
+                'Pinned' for pinned support
+                :param: top_support: Supports conditions at the top of the column
+                'Fixed' for fixed support
+                'Pinned' for pinned support
+                'Roller' for roller support
+                'Cantilever' for free top end
+                """
+        self.length = length
+        self.lamda = lamda
+        self.Phi_c = 0.9
+        self.Kf = 2.40
+        self.height = height
+        self.breadth = breadth
+        self.Member_type = Member_type
+        self.Grade = Grade
+        self.MC = MC
+        self.Material_type = Material_type
+        self.F_c = Fc
+        self.temperature = temperature
+        self.Incision_status = Incision_status
+        self.E_min_prime = E_min_prime
+        self.base_support = base_support
+        self.top_support = top_support
+        self.length = length * 12
+        if self.Material_type == 'SL':
+            self.c = 0.80
+        else:
+            self.c = 0.90
+        return None
+    def K(self):
+        base_support = self.base_support
+        top_support = self.top_support
+        if base_support == 'Fixed':
+            if top_support =='Fixed':
+                K = 0.65
+            elif top_support =='Pinned':
+                K = 0.8
+            elif top_support == 'Roller':
+                K = 1.20
+            elif top_support =='Cantilever':
+                K = 2.10
+            else:
+                print("Error! Base support is {b} while top support is {t}!"
+                      " These two do not go together!".format(b=self.base_support, t=self.top_support))
+                K = 2.40
+        elif base_support == 'Pinned':
+            if top_support == 'Pinned':
+                K = 1.0
+            else:
+                print("Error! Base support is {b} while top support is {t}!"
+                      " These two do not go together!".format(b=self.base_support, t=self.top_support))
+                K = 2.4
+        else:
+            print("Error! Base support is {b} while top support is {t}!"
+                  " These two do not go together!".format(b=self.base_support, t=self.top_support))
+            K = 2.4
+        return K
+    def l_e(self):
+        l_e = self.length * self.K()
+        return l_e
+    def C_F(self):
+        """
+                Returns the size factor (C_F) for a given rectangular section
+                according to NDS 2024 Table 4A in Supplements section
+                """
+        height = self.height
+        Grade = self.Grade
+        if Grade == 'Select' or Grade == 'Structural' or Grade == 'No.1 & Btr' or Grade == 'No.1' or Grade == 'No.2' or Grade == 'No.3':
+            if height == 2 or height == 3 or height == 4:
+                C_F = 1.15
+            elif height == 5 or height == 6:
+                C_F = 1.1
+            elif height == 8:
+                C_F = 1.05
+            elif height == 10 or height == 12:
+                C_F = 1.0
+            elif height >= 14:
+                C_F = 0.90
+            else:
+                C_F = None
+                print('The height value is not within the specified range!')
+                return 1
+        elif Grade == 'Stud':
+            if height == 2 or height == 3 or height == 4:
+                C_F = 1.05
+            elif height == 5 or height == 6:
+                C_F = 1.0
+            elif height >= 8:
+                C_F = 0.95
+            else:
+                C_F = None
+                print('The height value is not within the specified range!')
+                return 1
+        elif Grade == 'Construction' or Grade == 'Standard':
+            if height == 2 or height == 3 or height == 4:
+                C_F = 1.0
+            else:
+                C_F = None
+                print('The height value is not within the specified range!')
+                return 1
+        elif Grade == 'Utility':
+            if height == 2 or height == 3:
+                C_F = 0.6
+            elif height == 4:
+                C_F = 1
+            else:
+                C_F = None
+                print('The height value is not within the specified range!')
+                return 1
+        return C_F
+    def C_i(self):
+        if self.Incision_status:
+            C_i = 0.8
+        else:
+            C_i = 1.0
+        return C_i
+    def Moisture_condition(self):
+        if self.Material_type == 'SL':
+            if self.MC <= 0.19:
+                Wet = False
+            else:
+                Wet = True
+        else:
+            if self.MC <= 0.16:
+                Wet = False
+            else:
+                Wet = True
+        return Wet
+    def C_M(self):
+        if self.Moisture_condition() == False or self.F_c * self.C_F() <= 750:
+            C_M = 1.0
+        else:
+            C_M = 0.8
+        return C_M
+    def C_t(self):
+        if self.Moisture_condition():
+            if self.temperature < 100:
+                C_t = 1.0
+            elif 100 <= self.temperature < 125:
+                C_t = 0.7
+            else:
+                C_t = 0.5
+        else:
+            if self.temperature < 100:
+                C_t = 1.0
+            elif 100 <= self.temperature < 125:
+                C_t = 0.8
+            else:
+                C_t = 0.7
+        return C_t
+    def F_c_n_parallel_asterisk(self):
+        F_c_n_parallel_asterisk = self.F_c * self.Kf * self.lamda * self.Phi_c * self.C_M() * self.C_F() * self.C_t() * self.C_i()
+        return F_c_n_parallel_asterisk
+    def F_c_Euler_n(self):
+        if self.breadth >= self.height:
+            d = self.height
+        else:
+            d = self.breadth
+        F_c_Euler_n = 0.822 * (self.E_min_prime / pow((self.l_e() / d), 2))
+        return F_c_Euler_n
+    def C_P(self):
+        a = (1 + (self.F_c_Euler_n()/self.F_c_n_parallel_asterisk()) / (2 * self.c))
+        b = pow (a,2) - ((self.F_c_Euler_n()/self.F_c_n_parallel_asterisk())/self.c)
+        C_P = a - sqrt(b)
+        return C_P
+    def F_c_n_parallel_prime(self):
+        if self.Member_type == 'C':
+            F_c_n_parallel_prime = self.F_c * self.Kf * self.lamda * self.Phi_c * self.C_M() * self.C_F() * self.C_t() * self.C_i() * self.C_P()
+        else:
+            F_c_n_parallel_prime = self.F_c * self.Kf * self.lamda * self.Phi_c * self.C_M() * self.C_F() * self.C_t() * self.C_i()
+        return F_c_n_parallel_prime
+class Modified_F_t:
+    def __init__(self, lamda, height, Grade,
+                 Ft, temperature, Incision_status):
+        """
+                :param: lamda : Time effect factor (LRFD only)
+                :param height: Height of the rectangular section (inches)
+                :param Grade: Grade string representing the type of wooden section :
+                'Select' & 'Structural' & 'No.1 & Btr' & 'No.1' & 'No.2' & 'No.3'
+                'Stud'
+                'Construction' & 'Standard'
+                'Utility'
+                'Unspecified'
+                :param: Ft: Nominal tensile strength (parallel to grain)
+                :param temperature: working temperature in degrees of Fahrenheit
+                :param Incision_status: An identifier showing whether the section is incised or not
+                """
+        self.lamda = lamda
+        self.Phi_c = 0.8
+        self.Kf = 2.70
+        self.height = height
+        self.Grade = Grade
+        self.F_t = Ft
+        self.temperature = temperature
+        self.Incision_status = Incision_status
+        self.C_M = 1.0
+    def C_F(self):
+        """
+                Returns the size factor (C_F) for a given rectangular section
+                according to NDS 2024 Table 4A in Supplements section
+                """
+        height = self.height
+        Grade = self.Grade
+        if Grade == 'Select' or Grade == 'Structural' or Grade == 'No.1 & Btr' or Grade == 'No.1' or Grade == 'No.2' or Grade == 'No.3':
+            if height == 2 or height == 3 or height == 4:
+                C_F = 1.5
+            elif height == 5:
+                C_F = 1.4
+            elif height == 6:
+                C_F = 1.3
+            elif height == 8:
+                C_F = 1.2
+            elif height == 10:
+                C_F = 1.1
+            elif height == 12:
+                C_F = 1.0
+            elif height >= 14:
+                C_F = 0.90
+            else:
+                C_F = None
+                print('The height value is not within the specified range!')
+                return 1
+        elif Grade == 'Stud':
+            if height == 2 or height == 3 or height == 4:
+                C_F = 1.1
+            elif height == 5 or height == 6:
+                C_F = 1.0
+            elif height >= 8:
+                C_F = 0.90
+            else:
+                C_F = None
+                print('The height value is not within the specified range!')
+                return 1
+        elif Grade == 'Construction' or Grade == 'Standard':
+            if height == 2 or height == 3 or height == 4:
+                C_F = 1.0
+            else:
+                C_F = None
+                print('The height value is not within the specified range!')
+                return 1
+        elif Grade == 'Utility':
+            if height == 2 or height == 3:
+                C_F = 0.4
+            elif height == 4:
+                C_F = 1
+            else:
+                C_F = None
+                print('The height value is not within the specified range!')
+                return 1
+        return C_F
+    def C_i(self):
+        if self.Incision_status:
+            C_i = 0.8
+        else:
+            C_i = 1.0
+        return C_i
+    def C_t(self):
+        if self.temperature <= 100:
+            C_t = 1.0
+        else:
+            C_t = 0.9
+    def F_t_n_prime(self):
+        F_t_n_prime = self.F_t * self.Kf * self.lamda * self.Phi_c * self.C_M * self.C_F() * self.C_t() * self.C_i()
+        return  F_t_n_prime
