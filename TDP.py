@@ -1,35 +1,87 @@
 from math import pow
 from math import sqrt
 
-class Section_Tools:
-    def Rect_I_x(self, breadth, height):
+class Section_Tools:  # Error checks for unsuitable vlues are added to each function
+    def __init__(self, breadth, height, c_x, c_y):
         """
-        Returns moment of inertia around strong axis of a rectangular section
+
         :param breadth: Breadth of the rectangular section
         :param height: Height of the rectangular section
+        :param c_x: Distance between extreme fibers and neutral axis (around x-axis)
+        :param c_y: Distance between extreme fibers and neutral axis (around y-axis)
         """
+        self.breadth = breadth
+        self.height = height
+        self.c_x = c_x
+        self.c_y = c_y
+    def Rect_I_x(self):
+        height = self.height
+        breadth = self.breadth
         Ix = (breadth * pow(height, 3)) / 12
         return Ix
 
-    def Rect_I_y(self, breadth, height):
-        """
-        Returns moment of inertia around weak axis of a rectangular section
-        :param breadth: Breadth of the rectangular section
-        :param height: Height of the rectangular section
-        """
+    def Rect_I_y(self):
+        height = self.height
+        breadth = self.breadth
         Iy = (breadth * pow(height, 3)) / 12
         return Iy
 
-    def section_modulus(self, I, c):
-        """
-
-      :param I: Moment of inertia around an arbitrary axis
-      :param c: Distance between extreme fibers and neutral axis
-      :return:
-      """
-        S = I / c
+    def section_modulus_x(self):
+        I = self.Rect_I_x()
+        if self.c_x == 0:
+            print(" Section_Tools:section_modulus_x: "
+                  "Error! division by Zero is happening! Check the c_x value!")
+            S = None
+        else:
+            S = I / self.c_x
         return S
-class Modified_E_min:
+    def section_modulus_y(self):
+        I = self.Rect_I_y()
+        if self.c_x == 0:
+            print("Section_Tools:section_modulus_y:"
+                  " Error! division by Zero is happening! Check the c_y value!")
+            S = None
+        else:
+            S = I / self.c_y
+        return S
+    def Rect_A(self):
+        if self.breadth == 0:
+            print(" Section_Tools:Rect_A:"
+                  " Error! entered value for breadth is zero! Check the breadth value!")
+            A = None
+        elif self.height == 0:
+            print("Section_Tools:Rect_A:"
+                  " Error! entered value for height is zero! Check the height value!")
+            A = None
+        else:
+            A = self.breadth * self.height
+        return A
+    def Rect_Q_x(self):
+        if self.breadth == 0:
+            print("Section_Tools:Rect_Q_x:"
+                  "Error! entered value for breadth is zero! Check the breadth value!")
+            Q_x= None
+        elif self.height == 0:
+            print("Section_Tools:Rect_Q_x:"
+                  "Error! entered value for height is zero! Check the height value!")
+            Q_x = None
+        else:
+            Q_x = (self.breadth * pow(self.height, 2)) / 2
+        return Q_x
+    def Rect_Q_y(self):
+        if self.breadth == 0:
+            print("Section_Tools:Rect_Q_y:"
+                  "Error! entered value for breadth is zero! Check the breadth value!")
+            Q_y= None
+        elif self.height == 0:
+            print("Section_Tools:Rect_Q_y:"
+                  "Error! entered value for height is zero! Check the height value!")
+            Q_y = None
+        else:
+            Q_y = (self.height * pow(self.breadth, 2)) / 2
+        return Q_y
+
+class Modified_E_min: # Error checks for unsuitable vlues are added to each function
     def __init__(self, temperature, Incision_status, E_min):
         """
         :param: temperature: working temperature of the member in degrees of Fahrenheit
@@ -53,7 +105,8 @@ class Modified_E_min:
         elif 100 < temperature <= 150:
             C_t_E_min = 0.9
         else:
-            print('Error! the entered temperature is not within range!')
+            print('Modified_E_min:C_t_E_min:'
+                  'Error! the entered temperature is not within range!')
             C_t_E_min = None
             return 1
         return C_t_E_min
@@ -72,7 +125,8 @@ class Modified_E_min:
         """
         if self.C_t_E_min() == None:
             E_min_prime = None
-            print('Error! Check the temperature!','\n',
+            print('Modified_E_min:E_min_prime:'
+                  'Error! Check the temperature!','\n',
                   'Entered temperature : {temp}'.format(temp=self.temperature),
                   '\n','It is only allowed to be from 0 to 150 degrees')
             return self.E_min
@@ -80,7 +134,7 @@ class Modified_E_min:
             E_min_prime = self.E_min * self.C_t_E_min() * self.C_i_E_min() * self.C_M * self.Kf
         return E_min_prime
 
-class Modified_F_b:
+class Modified_F_b: # Error checks for unsuitable vlues are added to each function
     def __init__(self, lamda,breadth, height, length, unsupported_length, Grade, MC, Material_type,
                  Fb, temperature, Incision_status, Spacing, Species_Type, Curvature_status,
                  Taper_status, Span_status, Loading_type, E_min_prime):
@@ -166,12 +220,16 @@ class Modified_F_b:
                 c_fu = 1.2
             else:
                 c_fu = None
-                print("The height value is not within the specified range!", '\n',
+                print("Modified_F_b:C_fu:"
+                      "The height value is not within the specified range!", '\n',
                       'The breadth value is correct!')
                 return 1
         elif breadth == 4:
             if height == 2 or height == 3:
-                print("There is no need for C_fu for this case!")
+                print("Modified_F_b:C_fu:"
+                      "There is no need for C_fu for this case!",'\n',
+                      'Entered height value = {h} inches. There is no need '
+                      'for 2 or 3 inches of height to be considered a C_fu value for'.format(h=self.height))
                 c_fu = 1.0
             elif height == 4:
                 c_fu = 1.0
@@ -181,12 +239,16 @@ class Modified_F_b:
                 c_fu = 1.1
             else:
                 c_fu = None
-                print("The height value is not within the specified range!", '\n',
+                print("Modified_F_b:C_fu:"
+                      "The height value is not within the specified range!", '\n',
                       'The breadth value is correct!')
                 return 1
         else:
             c_fu = None
-            print('The breadth value is not within range!')
+            print('Modified_F_b:C_fu:'
+                  'The breadth value is not within range!','\n',
+                  'Entered breadth value = {b} inches! The only supported values are '
+                  '2,3, and 4 inches!'.format(b=self.breadth))
             return 1
         return c_fu
 
@@ -198,7 +260,8 @@ class Modified_F_b:
         breadth = self.breadth
         height = self.height
         Grade = self.Grade
-        if Grade == 'Select' or Grade == 'Structural' or Grade == 'No.1 & Btr' or Grade == 'No.1' or Grade == 'No.2' or Grade == 'No.3':
+        if (Grade == 'Select' or Grade == 'Structural' or Grade == 'No.1 & Btr' or
+                Grade == 'No.1' or Grade == 'No.2' or Grade == 'No.3'):
             if breadth == 2 or breadth == 3:
                 if height == 2 or height == 3 or height == 4:
                     C_F = 1.50
@@ -216,8 +279,11 @@ class Modified_F_b:
                     C_F = 0.90
                 else:
                     C_F = None
-                    print('The height value is not within the specified range!', '\n',
-                          'The breadth value is correct!')
+                    print('Modified_F_b:C_F:'
+                          'The height value is not within the specified range!', '\n',
+                          'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                          '\n', 'Acceptable range of values for {g} : '
+                                '2,3,4,5,6,8,10,12, 14 and beyond'.format(g=self.Grade))
                     return 1
             elif breadth == 4:
                 if height == 2 or height == 3 or height == 4:
@@ -236,12 +302,18 @@ class Modified_F_b:
                     C_F = 1.2
                 else:
                     C_F = None
-                    print('The height value is not within the specified range!', '\n',
-                          'The breadth value is correct!')
+                    print('Modified_F_b:C_F:'
+                          'The height value is not within the specified range!', '\n',
+                          'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                          '\n', 'Acceptable range of values for {g} : '
+                                '2,3,4,5,6,8,10,12, 14 and beyond'.format(g=self.Grade))
                     return 1
             else:
                 C_F = None
-                print('The breadth value is not within the specified range!')
+                print('Modified_F_b:C_F:'
+                      'The breadth value is not within the specified range!','\n',
+                      'Entered breadth value = {b} inches! '
+                      'The only supported values are 2,3, and 4 inches.'.format(b=self.breadth))
                 return 1
         elif Grade == 'Stud':
             if breadth == 2 or breadth == 3 or breadth == 4:
@@ -259,8 +331,11 @@ class Modified_F_b:
                     C_F = 0.6
                 else:
                     C_F = None
-                    print('The height value is not within the specified range!', '\n',
-                          'The breadth value is correct!')
+                    print('Modified_F_b:C_F:'
+                          'The height value is not within the specified range!', '\n',
+                          'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                          '\n', 'Acceptable range of values for {g} : '
+                                '2,3,4,5,6,8,10,12, 14 and beyond'.format(g=self.Grade))
                     return 1
         elif Grade == 'Construction' or Grade == 'Standard':
             if breadth == 2 or breadth == 3 or breadth == 4:
@@ -268,12 +343,18 @@ class Modified_F_b:
                     C_F = 1
                 else:
                     C_F = None
-                    print('The height value is not within the specified range!', '\n',
-                          'The breadth value is correct!')
+                    print('Modified_F_b:C_F:'
+                          'The height value is not within the specified range!', '\n',
+                          'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                          '\n', 'Acceptable range of values for {g} : '
+                                '2,3,4'.format(g=self.Grade))
                     return 1
             else:
                 C_F = None
-                print('The breadth value is not within the specified range!')
+                print('Modified_F_b:C_F:'
+                      'The breadth value is not within the specified range!', '\n',
+                      'Entered breadth value = {b} inches! '
+                      'The only supported values are 2,3, and 4 inches.'.format(b=self.breadth))
                 return 1
         elif Grade == 'Utility':
             if breadth == 2 or breadth == 3:
@@ -283,23 +364,31 @@ class Modified_F_b:
                     C_F = 1
                 else:
                     C_F = None
-                    print('The height value is not within the specified range!', '\n',
-                          'The breadth value is correct!')
+                    print('Modified_F_b:C_F:'
+                          'The height value is not within the specified range!', '\n',
+                          'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                          '\n', 'Acceptable range of values for {g} : '
+                                '2,3, and 4'.format(g=self.Grade))
                     return 1
             elif breadth == 4:
                 if height == 2 or height == 3:
                     C_F = 1.0
-                    print('There is no need to consider C_F value for this type of section')
+                    print('Modified_F_b:C_F:'
+                          'There is no need to consider C_F value for this type of section')
                 elif height == 4:
                     C_F = 1.0
                 else:
                     C_F = None
-                    print('The height value is not within the specified range!', '\n',
-                          'The breadth value is correct!')
+                    print('Modified_F_b:C_F:'
+                          'The height value is not within the specified range!', '\n',
+                          'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                          '\n', 'Acceptable range of values for {g} : '
+                                '2,3, and 4'.format(g=self.Grade))
                     return 1
         else:
             C_F = None
-            print('The entered grade is not present in the corresponding table of NDS 2024')
+            print('Modified_F_b:C_F:'
+                  'The entered grade is not present in the corresponding table of NDS 2024')
             return 1
         return C_F
 
@@ -318,7 +407,8 @@ class Modified_F_b:
             C_M = 1.0
         else:
             C_M = None
-            print('Error! Check the input!')
+            print('Modified_F_b:C_M:'
+                  'Error! Check the input!')
             return 1
         return C_M
 
@@ -355,7 +445,10 @@ class Modified_F_b:
                 C_t = 0.5
             else:
                 C_t = None
-                print('Error! The entered temperature value is not within range!')
+                print('Modified_F_b:C_t:'
+                      'Error! The entered temperature value is not within range!'
+                      ,'\n','The temperature should be between 0 and 150 degrees of fahrenheit'
+                      ,'\n','Entered temperature value: {t} '.format(t=self.temperature))
                 return 1
         else:
             if temperature <= 100:
@@ -366,8 +459,10 @@ class Modified_F_b:
                 C_t = 0.7
             else:
                 C_t = None
-                print('Error! The entered temperature value is not within range!')
-                return 1
+                print('Modified_F_b:C_t:'
+                      'Error! The entered temperature value is not within range!'
+                      , '\n', 'The temperature should be between 0 and 150 degrees of fahrenheit',
+                      '\n', 'Entered temperature value: {t} '.format(t=self.temperature))
         return C_t
 
     def C_i(self):
@@ -394,7 +489,9 @@ class Modified_F_b:
                 C_r = 1.0
         else:
             C_r = None
-            print('C_r is not applicable to this case!')
+            print('Modified_F_b:C_r:'
+                  'C_r is not applicable to this case! as the entered breadth value is {b} inches'
+                  'while only 2, 3, and 4 inches are accounted for'.format(b=self.breadth))
             return 1
         return C_r
 
@@ -419,13 +516,16 @@ class Modified_F_b:
         if Material_type == 'GLT':
             if Curvature_status:
                 C_c = None
-                print('C_c is not applicable to this case!')
+                print('Modified_F_b:C_c:'
+                      'C_c is not applicable to this case! since this code does not'
+                      'consider curved members!')
                 return 1
             else:
                 C_c = 1.0
         else:
             C_c = None
-            print('C_c is not applicable to this case!')
+            print('Modified_F_b:C_c:'
+                  'C_c is not applicable to this case! Material is not GLT!')
             return 1
         return C_c
 
@@ -438,13 +538,16 @@ class Modified_F_b:
         if Material_type == 'GLT':
             if Taper_status:
                 C_I = None
-                print('C_I is not applicable in this case!')
+                print('Modified_F_b:C_I:'
+                      'C_I is not applicable to this case! since this code does not'
+                      'consider tapered members!')
                 return 1
             else:
                 C_I = 1.0
         else:
             C_I = None
-            print('C_I is not applicable in this case!')
+            print('Modified_F_b:C_I:'
+                  'C_I is not applicable to this case! Material is not GLT!')
             return 1
         return C_I
 
@@ -457,7 +560,7 @@ class Modified_F_b:
         unsupported_length = self.unsupported_length * 12
         Span_status = self.Span_status
         Loading_type = self.Loading_type
-        if height > breadth and (unsupported_length / height) < 7:
+        if height >= breadth and (unsupported_length / height) < 7:
             if Span_status == 'Cantilever':
                 if Loading_type == 'C':
                     le = 1.87 * unsupported_length
@@ -484,7 +587,7 @@ class Modified_F_b:
                     le = 1.84 * unsupported_length
                 else:
                     le = 2.06 * unsupported_length
-        elif height > breadth and (unsupported_length / height) >= 7:
+        elif height >= breadth and (unsupported_length / height) >= 7:
             if Span_status == 'Cantilever':
                 if Loading_type == 'U':
                     le = (0.9 * unsupported_length) + (3 * height)
@@ -512,16 +615,18 @@ class Modified_F_b:
                         le = (1.63 * unsupported_length) + (3 * height)
                     else:
                         le = 1.84 * unsupported_length
-        return le
+            return le
 
     def R_B(self):
         """
         Returns slenderness ratio of a given member
         """
-        breadth = self.breadth
-        height = self.height
-        effective_length = self.l_e()
-        R_b = sqrt((effective_length * height) / pow(breadth, 2))
+        if self.height == self.breadth:
+            effective_length = self.l_e()
+            R_b = sqrt(effective_length / self.breadth)
+        else:
+            effective_length = self.l_e()
+            R_b = sqrt((effective_length * self.height) / pow(self.breadth, 2))
         return R_b
     def F_b_E(self):
         """
@@ -554,7 +659,7 @@ class Modified_F_b:
         else:
             F_b_n_prime = self.Fb * self.lamda * self.K_f * self.Phi_b * self.C_M() * self.C_t() * self.C_L() * self.C_V() * self.C_fu() * self.C_c() * self.C_I() * self.C_i() * self.C_r()
         return F_b_n_prime
-class Modified_F_v:
+class Modified_F_v: # Error checks for unsuitable vlues are added to ech function
     def __init__(self, lamda, MC, Material_type,
                  Fv, temperature, Incision_status):
         """
@@ -608,24 +713,31 @@ class Modified_F_v:
                 Wet = False
             else:
                 Wet = True
-        elif Material_type == 'GLT' or Material_type == 'PIJ' or Material_type == 'SCL' or Material_type == 'WSP' or Material_type == 'CLT':
+        elif (Material_type == 'GLT' or Material_type == 'PIJ' or
+              Material_type == 'SCL' or Material_type == 'WSP' or Material_type == 'CLT'):
             if MC <= 0.16:
                 Wet = False
             else:
                 Wet = True
+        else:
+            print("Modified_F_v:Moisture_Condition:"
+                  "Error! Check the material type!",'\n',
+                  'Entered Material Type : {mt}'.format(mt=self.Material_type),'\n',
+                  'Only SL, GLT, SCL, PIJ, WSP, and CLT are supported!')
+            Wet = None
         return Wet
     def C_t(self):
         if self.Moisture_Condition():
             if self.temperature < 100:
                 C_t = 1.0
-            elif 100<= self.temperature < 125:
+            elif 100 <= self.temperature < 125:
                 C_t = 0.7
             else:
                 C_t = 0.5
         else:
             if self.temperature < 100:
                 C_t = 1.0
-            elif 100<= self.temperature < 125:
+            elif 100 <= self.temperature < 125:
                 C_t = 0.8
             else:
                 C_t = 0.7
@@ -640,11 +752,15 @@ class Modified_F_v:
         if self.Material_type =='GLT' or self.Material_type =='Glulam':
             C_vr = 0.72
         else:
+            print('Modified_F_v:C_vr:'
+                  'Warning! Check the Material type!','\n',
+                  'Entered Material Type : {mt}'.format(mt=self.Material_type),'\n',
+                  'Only GLT and Glulam are accounted for!')
             C_vr = 1.0
         return C_vr
     def F_v_n_prime(self):
         F_v_n_prime = self.F_v * self.Phi_v * self.K_f * self.lamda * self.C_M() * self.C_t() * self.C_i() * self.C_vr()
-class Modified_F_c_perpendicular:
+class Modified_F_c_perpendicular: # Error checks for unsuitable vlues are added to each function
     def __init__(self, MC, Material_type, temperature, F_c_perp):
         """
 
@@ -678,6 +794,9 @@ class Modified_F_c_perpendicular:
             else:
                 Wet = True
         else:
+            print('Modified_F_c_perpendicular:Moisture_condition:'
+                  'Warning! Entered Material Type : {mt}'.format(mt=self.Material_type),'\n',
+                  'Enter SL if you meant Sawn Lumber')
             if self.MC <= 0.16:
                 Wet = False
             else:
@@ -703,7 +822,7 @@ class Modified_F_c_perpendicular:
     def F_c_n_perpendicular_prime(self):
         F_c_n_perp_prime = self.F_c_perp * self.Kf * self.Phi_c * self.C_M() * self.C_t() * self.C_i * self.C_b
         return F_c_n_perp_prime
-class Modified_F_c_parallel:
+class Modified_F_c_parallel: # Error checks for unsuitable vlues are added to each function
     def __init__(self, lamda, height, breadth, Member_type, Grade, MC, Material_type,
                  Fc, temperature, Incision_status, E_min_prime,
                  length, base_support, top_support):
@@ -775,18 +894,21 @@ class Modified_F_c_parallel:
             elif top_support =='Cantilever':
                 K = 2.10
             else:
-                print("Error! Base support is {b} while top support is {t}!"
+                print("Modified_F_c_parallel:K:"
+                      "Error! Base support is {b} while top support is {t}!"
                       " These two do not go together!".format(b=self.base_support, t=self.top_support))
                 K = 2.40
         elif base_support == 'Pinned':
             if top_support == 'Pinned':
                 K = 1.0
             else:
-                print("Error! Base support is {b} while top support is {t}!"
+                print("Modified_F_c_parallel:K:"
+                      "Error! Base support is {b} while top support is {t}!"
                       " These two do not go together!".format(b=self.base_support, t=self.top_support))
                 K = 2.4
         else:
-            print("Error! Base support is {b} while top support is {t}!"
+            print("Modified_F_c_parallel:K:"
+                  "Error! Base support is {b} while top support is {t}!"
                   " These two do not go together!".format(b=self.base_support, t=self.top_support))
             K = 2.4
         return K
@@ -800,7 +922,8 @@ class Modified_F_c_parallel:
                 """
         height = self.height
         Grade = self.Grade
-        if Grade == 'Select' or Grade == 'Structural' or Grade == 'No.1 & Btr' or Grade == 'No.1' or Grade == 'No.2' or Grade == 'No.3':
+        if (Grade == 'Select' or Grade == 'Structural' or Grade == 'No.1 & Btr' or
+                Grade == 'No.1' or Grade == 'No.2' or Grade == 'No.3'):
             if height == 2 or height == 3 or height == 4:
                 C_F = 1.15
             elif height == 5 or height == 6:
@@ -813,7 +936,11 @@ class Modified_F_c_parallel:
                 C_F = 0.90
             else:
                 C_F = None
-                print('The height value is not within the specified range!')
+                print('Modified_F_c_parallel:C_F:'
+                      'The height value is not within the specified range!','\n',
+                      'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                      '\n', 'Acceptable range of values for {g} : '
+                      '2,3,4,5,6,8,10,12, 14 and beyond'.format(g=self.Grade))
                 return 1
         elif Grade == 'Stud':
             if height == 2 or height == 3 or height == 4:
@@ -824,14 +951,22 @@ class Modified_F_c_parallel:
                 C_F = 0.95
             else:
                 C_F = None
-                print('The height value is not within the specified range!')
+                print('Modified_F_c_parallel:C_F:'
+                      'The height value is not within the specified range!', '\n',
+                      'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                      '\n', 'Acceptable range of values for {g} : '
+                            '2,3,4,5,6,8 and beyond'.format(g=self.Grade))
                 return 1
         elif Grade == 'Construction' or Grade == 'Standard':
             if height == 2 or height == 3 or height == 4:
                 C_F = 1.0
             else:
                 C_F = None
-                print('The height value is not within the specified range!')
+                print('Modified_F_c_parallel:C_F:'
+                      'The height value is not within the specified range!', '\n',
+                      'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                      '\n', 'Acceptable range of values for {g} : '
+                            '2,3, and 4'.format(g=self.Grade))
                 return 1
         elif Grade == 'Utility':
             if height == 2 or height == 3:
@@ -840,7 +975,11 @@ class Modified_F_c_parallel:
                 C_F = 1
             else:
                 C_F = None
-                print('The height value is not within the specified range!')
+                print('Modified_F_c_parallel:C_F:'
+                      'The height value is not within the specified range!', '\n',
+                      'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                      '\n', 'Acceptable range of values for {g} : '
+                            '2,3, and 4'.format(g=self.Grade))
                 return 1
         return C_F
     def C_i(self):
@@ -936,7 +1075,8 @@ class Modified_F_t:
                 """
         height = self.height
         Grade = self.Grade
-        if Grade == 'Select' or Grade == 'Structural' or Grade == 'No.1 & Btr' or Grade == 'No.1' or Grade == 'No.2' or Grade == 'No.3':
+        if (Grade == 'Select' or Grade == 'Structural' or
+                Grade == 'No.1 & Btr' or Grade == 'No.1' or Grade == 'No.2' or Grade == 'No.3'):
             if height == 2 or height == 3 or height == 4:
                 C_F = 1.5
             elif height == 5:
@@ -953,7 +1093,11 @@ class Modified_F_t:
                 C_F = 0.90
             else:
                 C_F = None
-                print('The height value is not within the specified range!')
+                print('Modified_F_t:C_F:'
+                      'The height value is not within the specified range!', '\n',
+                      'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                      '\n', 'Acceptable range of values for {g} : '
+                            '2,3,4,5,6,8,10,12, 14 and beyond'.format(g=self.Grade))
                 return 1
         elif Grade == 'Stud':
             if height == 2 or height == 3 or height == 4:
@@ -964,14 +1108,22 @@ class Modified_F_t:
                 C_F = 0.90
             else:
                 C_F = None
-                print('The height value is not within the specified range!')
+                print('Modified_F_t:C_F:'
+                      'The height value is not within the specified range!', '\n',
+                      'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                      '\n', 'Acceptable range of values for {g} : '
+                            '2,3,4,5,6,8 and beyond'.format(g=self.Grade))
                 return 1
         elif Grade == 'Construction' or Grade == 'Standard':
             if height == 2 or height == 3 or height == 4:
                 C_F = 1.0
             else:
                 C_F = None
-                print('The height value is not within the specified range!')
+                print('Modified_F_t:C_F:'
+                      'The height value is not within the specified range!', '\n',
+                      'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                      '\n', 'Acceptable range of values for {g} : '
+                            '2,3,4'.format(g=self.Grade))
                 return 1
         elif Grade == 'Utility':
             if height == 2 or height == 3:
@@ -980,7 +1132,11 @@ class Modified_F_t:
                 C_F = 1
             else:
                 C_F = None
-                print('The height value is not within the specified range!')
+                print('Modified_F_t:C_F:'
+                      'The height value is not within the specified range!', '\n',
+                      'Entered Grade : {g}, Entered height = {h} inches'.format(g=self.Grade, h=self.height),
+                      '\n', 'Acceptable range of values for {g} : '
+                            '2,3,4'.format(g=self.Grade))
                 return 1
         return C_F
     def C_i(self):
