@@ -184,7 +184,7 @@ class Modified_F_b: # Error checks for unsuitable vlues are added to each functi
         self.breadth = breadth
         self.height = height
         self.length = length * 12
-        self.unsupported_length = unsupported_length
+        self.unsupported_length = unsupported_length * 12
         self.Grade = Grade
         self.MC = MC
         self.Material_type = Material_type
@@ -568,7 +568,7 @@ class Modified_F_b: # Error checks for unsuitable vlues are added to each functi
                     le = 1.33 * unsupported_length
                 else:
                     le = 2.06 * unsupported_length
-            elif Span_status == 'Single Span':
+            else:
                 if Loading_type == 'C':
                     le = 1.80 * unsupported_length
                 elif Loading_type == 'U':
@@ -587,11 +587,11 @@ class Modified_F_b: # Error checks for unsuitable vlues are added to each functi
                     le = 1.84 * unsupported_length
                 else:
                     le = 2.06 * unsupported_length
-        elif height >= breadth and (unsupported_length / height) >= 7:
+        else:
             if Span_status == 'Cantilever':
                 if Loading_type == 'U':
                     le = (0.9 * unsupported_length) + (3 * height)
-                elif Loading_type == 'C':
+                else:
                     le = (1.44 * unsupported_length) + (3 * height)
             elif Span_status == 'Single Span':
                 if Loading_type == 'C':
@@ -627,6 +627,17 @@ class Modified_F_b: # Error checks for unsuitable vlues are added to each functi
         else:
             effective_length = self.l_e()
             R_b = sqrt((effective_length * self.height) / pow(self.breadth, 2))
+        if R_b <= 50:
+            print('\n','$$$$$$$$','\n',
+                  'Modified_F_b:R_B: Current slenderness ratio '
+                  '(for bending only) = {rb} <= 50.   '
+                  'Ratio Check : O. K.'.format(rb=R_b),'\n')
+        else:
+            print('\n','$$$$$$$$','\n',
+                  'Modified_F_b:R_B: Current slenderness ratio'
+                  ' (for bending only) = {rb} > 50.   '
+                  'Ratio Check : Error! Slenderness ratio is out of bounds!'
+                  'consider redesigning the section!'.format(rb=R_b),'\n')
         return R_b
     def F_b_E(self):
         """
@@ -760,6 +771,7 @@ class Modified_F_v: # Error checks for unsuitable vlues are added to ech functio
         return C_vr
     def F_v_n_prime(self):
         F_v_n_prime = self.F_v * self.Phi_v * self.K_f * self.lamda * self.C_M() * self.C_t() * self.C_i() * self.C_vr()
+        return F_v_n_prime
 class Modified_F_c_perpendicular: # Error checks for unsuitable vlues are added to each function
     def __init__(self, MC, Material_type, temperature, F_c_perp):
         """
@@ -915,6 +927,26 @@ class Modified_F_c_parallel: # Error checks for unsuitable vlues are added to ea
     def l_e(self):
         l_e = self.length * self.K()
         return l_e
+    def R_B(self):
+        R_b = self.l_e() / self.height
+        if R_b <= 50:
+            print('\n','$$$$$$$$','\n',
+                  'Modified_F_c_parallel:R_B: Current slenderness ratio '
+                  '(for compression only) = {rb} <= 50.   '
+                  'Ratio Check : O. K. for both design and construction'.format(rb=R_b),'\n')
+        elif 50 < R_b <= 75:
+            print('\n','$$$$$$$$','\n',
+                  'Modified_F_c_parallel:R_B: Current slenderness ratio '
+                  '(for compression only) = 50 <= {rb} < 75.   '
+                  'Ratio Check : O. K. for construction only!'.format(rb=R_b),'\n')
+        else:
+            print('\n','$$$$$$$$','\n',
+                  'Modified_F_c_parallel:R_B: Current slenderness ratio '
+                  '(for compression only) = 75 < {rb} .   '
+                  'Ratio Check : Failed! for both design and construction!'
+                  'consider redesigning the section!'.format(rb=R_b),'\n')
+
+        return R_b
     def C_F(self):
         """
                 Returns the size factor (C_F) for a given rectangular section
@@ -1150,6 +1182,7 @@ class Modified_F_t:
             C_t = 1.0
         else:
             C_t = 0.9
+        return C_t
     def F_t_n_prime(self):
         F_t_n_prime = self.F_t * self.Kf * self.lamda * self.Phi_c * self.C_M * self.C_F() * self.C_t() * self.C_i()
         return  F_t_n_prime
