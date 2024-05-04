@@ -1,4 +1,4 @@
-# Calculates reference design values for nail fasteners (Z)
+# Calculates reference design values for bolt fasteners (Z) + failure modes associated with bolted connections (Z_NT, Z_GT, and Z_RT)
 from math import pow , sqrt, sin, cos, radians
 class Single_shear_reference_Z:
     def __init__(self, D, bolt_length, t_m, t_s, side_member_type, G_s, F_e_s_um,
